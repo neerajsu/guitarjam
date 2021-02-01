@@ -16,7 +16,7 @@ This project uses peer to peer WebRTC server [peer](https://github.com/peers/pee
 npm install
 
 # installs peer globally on your machine
-npm npm i -g peer
+npm i -g peer
 
 # runs peer server on port 3001
 peerjs --port 3001
