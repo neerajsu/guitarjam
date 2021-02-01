@@ -9,11 +9,14 @@ app.use(express.static('public'));
 
 app.get('/', (req, res) => {
   res.redirect(`/${uuidV4()}`);
-})
+});
 
 app.get('/:room', (req, res) => {
-  res.render('room', { roomId: req.params.room });
-})
+  res.render('room', {
+       roomId: req.params.room,
+       peerPort: process.env.PEER_PORT || 3001 
+    });
+});
 
 io.on('connection', socket => {
   socket.on('join-room', (roomId, userId) => {
@@ -24,6 +27,8 @@ io.on('connection', socket => {
       socket.to(roomId).broadcast.emit('user-disconnected', userId);
     })
   })
-})
+});
 
-server.listen(3000);
+app.set('port', process.env.PORT || 3000);
+
+server.listen(app.get('port'));

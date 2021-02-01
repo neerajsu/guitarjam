@@ -11,7 +11,7 @@ navigator.mediaDevices.getUserMedia({
 }).then(stream => {
     myPeer = new Peer(undefined, {
         host: '/',
-        port: '3001',
+        port: PEER_PORT,
     })
     addVideoStream(myVideo, stream);
     myPeer.on('open', id => {
