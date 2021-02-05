@@ -14,7 +14,8 @@ app.get('/', (req, res) => {
 app.get('/:room', (req, res) => {
   res.render('room', {
        roomId: req.params.room,
-       peerPort: process.env.PEER_PORT || 3001 
+       peerPort: process.env.PEER_PORT || 3001 ,
+       peerHost: process.env.PEER_HOST || 'localhost' 
     });
 });
 
