@@ -6,7 +6,11 @@ const myVideo = document.createElement('video');
 myVideo.muted = true;
 let peers = {};
 navigator.mediaDevices.getUserMedia({
-    video: true,
+    video: {
+        height: 1080,
+        width: 1920,
+        aspectRatio: 1.7777777778
+    },
     audio: true
 }).then(stream => {
     myPeer = new Peer(undefined, {
