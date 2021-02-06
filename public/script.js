@@ -11,7 +11,11 @@ navigator.mediaDevices.getUserMedia({
         width: 1920,
         aspectRatio: 1.7777777778
     },
-    audio: true
+    audio: {
+        autoGainControl: false,
+        echoCancellation: false,
+        noiseSuppression: false
+    }
 }).then(stream => {
     myPeer = new Peer(undefined, {
         host: PEER_HOST,
