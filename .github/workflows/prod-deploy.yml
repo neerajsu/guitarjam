@@ -1,0 +1,72 @@
+# This workflow will deploy peerjs and guitarjam to Vultr hosting and then update cloudflare DNS with vultr public ips
+# Uses vultr-cli and cloudflare-cli (Search marketplace for these actions)
+
+name: Deploy guitarjam to public cloud hosting
+
+on:
+   workflow_dispatch:
+
+jobs:
+  deploy-vultr:
+    name: Install vultr-cli and deploy code to Vultr. Then update cloudflare dns with Vultr instances public ips
+    runs-on: ubuntu-latest
+    env:
+      CF_API_KEY: ${{ secrets.CF_API_KEY }}
+      CF_API_DOMAIN: ${{ secrets.CF_API_DOMAIN }}
+      VULTR_API_KEY: ${{ secrets.VULTR_API_KEY }}
+    steps:
+    
+      - name: "Setting up vultr cli action"
+        uses: techknowlogick/action-vultr@v2
+        with:
+          token: ${{ secrets.VULTR_API_KEY }}
+          
+      - name: "Setting up node.js"
+        uses: actions/setup-node@v1
+        with:
+          node-version: 12
+          registry-url: https://registry.npmjs.org/
+      
+      - name: "Setting up cloudflare cli"
+        run: npm install -g cloudflare-cli
+        
+      - name: "Deleting instances of peerjs and guitarJam if it exists"
+        run: |
+          echo "Deleting instances of peerjs and guitarJam if exists"
+          count1=vultr-cli instance list | grep guitar-jam | wc -l
+          if [$count1 -ne 0]; then
+           vultr-cli instance delete $(vultr-cli instance list | grep guitar-jam | awk -F ' ' '{print $1}')
+          fi
+          
+          count2=vultr-cli instance list | grep peerjs | wc -l
+          if [$count2 -ne 0]; then
+           vultr-cli instance delete $(vultr-cli instance list | grep peerjs | awk -F ' ' '{print $1}')
+          fi
+          
+          echo "Finished trying to delete instances"
+      
+      - name: "Creating a new instance (1 GB 1 CPU) for guitarJam and deploying code"
+        run: |
+          echo "Creating guitar-jam vultr instance and deploying code"
+          vultr-cli instance create --region sea --plan vc2-1c-1gb --os 413 --label guitar-jam --ipv6 false --script-id 8687f4e4-6426-4022-ac52-b7bd365d8eda
+          
+      - name: "Creating a new instance (4 GB 2 CPU) for peerjs"
+        run: |
+          echo "Creating peerjs vultr instance and deploying code"
+          vultr-cli instance create --region sea --plan vc2-2c-4gb --os 413 --label peerjs --ipv6 false --script-id fb60e517-23a3-4482-b81c-c2644a8c395b
+          
+      - name: "List out instances"
+        id: instances
+        run: |
+          echo "Finished trying to set up instances. See result below"
+          vultr-cli instance list
+          echo ::set-output guitarjam-ip=vultr-cli instance list | grep guitar-jam | awk -F ' ' '{print $2}'
+          echo ::set-output peerjs-ip=vultr-cli instance list | grep peerjs | awk -F ' ' '{print $2}'
+          
+      - name: "Update cloudflare DNS"
+        run: |
+          cfcli edit guitarjambaby.com ${{ steps.instances.outputs.guitarjam-ip }}
+          cfcli edit stream.guitarjambaby.com ${{ steps.instances.outputs.peerjs-ip }}
+          cfcli enable guitarjambaby.com
+          cfcli enable stream.guitarjambaby.com
+          cfcli ls

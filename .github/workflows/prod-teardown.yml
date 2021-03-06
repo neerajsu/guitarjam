@@ -1,0 +1,40 @@
+# This workflow will Tear down peerjs and guitarjam from Vultr hosting
+# Uses vultr-cli (Search marketplace for these actions)
+# Future functionality wanted: Route DNS to custom response, saying not available
+
+name: Teardown guitarjam from public cloud hosting
+
+on:
+   workflow_dispatch:
+
+jobs:
+  teardown-vultr:
+    name: Install vultr-cli and destroy servers on Vultr.
+    runs-on: ubuntu-latest
+    env:
+      VULTR_API_KEY: ${{ secrets.VULTR_API_KEY }}
+    steps:
+    
+      - name: "Setting up vultr cli action"
+        uses: techknowlogick/action-vultr@v2
+        with:
+          token: ${{ secrets.VULTR_API_KEY }}
+        
+      - name: "Deleting instances of peerjs and guitarJam if it exists"
+        run: |
+          echo "Deleting instances of peerjs and guitarJam if exists"
+          count1=vultr-cli instance list | grep guitar-jam | wc -l
+          if [$count1 -ne 0]; then
+           echo "Found guitarjam instance"
+           vultr-cli instance delete $(vultr-cli instance list | grep guitarjam | awk -F ' ' '{print $1}')
+           echo "Finished deleting guitarjam instance"
+          fi
+          
+          count2=vultr-cli instance list | grep peerjs | wc -l
+          if [$count2 -ne 0]; then
+           echo "Found peerjs instance"
+           vultr-cli instance delete $(vultr-cli instance list | grep peerjs | awk -F ' ' '{print $1}')
+           echo "Finished deleting peerjs instance"
+          fi
+          
+          echo "Finished trying to delete instances"
